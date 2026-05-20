@@ -1,0 +1,17 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npx skills *)",
+      "Bash(cmd *)",
+      "PowerShell(Get-ChildItem *)",
+      "PowerShell(Test-Path *)",
+      "Bash(git init *)",
+      "Bash(git branch *)",
+      "PowerShell(gh repo *)",
+      "PowerShell(winget install *)",
+      "PowerShell(gh *)",
+      "PowerShell(gh auth *)",
+      "PowerShell(git *)"
+    ]
+  }
+}
