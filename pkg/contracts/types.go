@@ -94,6 +94,22 @@ type PositionMessage struct {
 	TimestampNS int64  `json:"ts_ns"`
 }
 
+// RiskConfigMessage is the Redis Pub/Sub schema for risk config updates
+// (channel: config:risk:{game_uuid}). Published by the Control Plane.
+// All threshold and offset fields are int64 to match PositionTracker.NetPosition
+// and eliminate any integer conversion on the hot-path comparison.
+type RiskConfigMessage struct {
+	V        int    `json:"v"`
+	GameUUID string `json:"game_uuid"`
+	T0       int64  `json:"t0"`
+	T1       int64  `json:"t1"`
+	T2       int64  `json:"t2"`
+	Offset1  int64  `json:"offset_1"`
+	Offset2  int64  `json:"offset_2"`
+	Width1   int64  `json:"width_1"`
+	Width2   int64  `json:"width_2"`
+}
+
 // AlphaMessage is the Redis Pub/Sub schema for fair value updates (channel: alpha:{game_uuid}).
 type AlphaMessage struct {
 	V           int     `json:"v"`
