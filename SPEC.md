@@ -399,10 +399,14 @@ Required benchmarks (minimum set):
 
 ---
 
-## Open Questions
+## Architectural Decisions (Finalized)
 
-1. **Tick size:** What is the minimum price increment (tick) on Novig and Sporttrade? Required to define `OFFSET_n` and `WIDTH_n` in absolute terms.
-2. **Fill notification:** How do Novig/Sporttrade notify the bot of fills — via the same order book WebSocket, or a separate execution report stream? This determines how `PositionTracker` is updated.
-3. **Ring buffer capacity:** Default capacity per game worker (suggest 1024 slots — confirm or override).
-4. **Config hot-reload:** Should `RiskConfigMessage` updates take effect on the next tick, or must the current in-flight hot path complete first?
-5. **Three-way market target outcome:** For a three-way market (Win/Draw/Lose), which outcome index is the "target" for alpha derivation — always the home side, or specified per-game in the config?
+1. **Tick size:** Internal offsets standardized to discrete integer American odds ticks (e.g., -110 → -111). No floating-point arithmetic in the skew application path. `OFFSET_n` and `WIDTH_n` are signed integers representing whole American odds steps.
+
+2. **Fill notification:** Execution reports ingested from private account streams (separate from order book WebSocket). Each report is translated into a signed integer fill count and routed into the game worker's ring buffer as a `FILL_TICK`. This triggers instant inventory re-evaluation within the normal hot path loop — no separate fill-handling goroutine required.
+
+3. **Ring buffer capacity:** Hardcoded at exactly **1024 slots** per game worker. Index wrapping uses bitwise AND: `idx & 1023`. Modulo is forbidden on the hot path.
+
+4. **Config hot-reload:** `RiskConfigMessage` updates are injected into the ring buffer as a `CONFIG_UPDATE_TICK`. The worker processes it sequentially between price evaluations, updating its local risk tier arrays with no race conditions and no locking.
+
+5. **Three-way market targets:** The Power Method calculates fair probabilities for all three outcomes simultaneously per tick. Each outcome maintains a distinct `QuoteState` track. Which outcomes are actively quoted is controlled per-game via the config (`active_outcomes []uint8`). All three fair values are always computed; quoting is gated by the active flag.
